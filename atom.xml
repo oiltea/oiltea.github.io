@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://oiltea.github.io</id>
+    <title>Oiltea</title>
+    <updated>2022-06-28T10:52:52.810Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://oiltea.github.io"/>
+    <link rel="self" href="https://oiltea.github.io/atom.xml"/>
+    <subtitle>生活不知眼前的苟且，还有诗和远方的田野</subtitle>
+    <logo>https://oiltea.github.io/images/avatar.png</logo>
+    <icon>https://oiltea.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2022, Oiltea</rights>
+    <entry>
+        <title type="html"><![CDATA[发布jar包到maven中央仓库（无个人域名）]]></title>
+        <id>https://oiltea.github.io/post/发布jar包到maven中央仓库（无个人域名）/</id>
+        <link href="https://oiltea.github.io/post/发布jar包到maven中央仓库（无个人域名）/">
+        </link>
+        <updated>2019-01-18T02:21:28.000Z</updated>
+        <summary type="html"><![CDATA[<p>自使用maven以来，没少使用maven中央仓库中的各种jar包，方便有效，但是咱们也不能总是只取不予，也应该懂得奉献，当你写好了一个十分好用的jar包，想贡献出去给大家使用的时候，应该怎么做呢？当然是发布到maven的中央仓库了，不过要说这个发布过程，还真是比较复杂，本文就来详细说下如何发布jar包到maven中央仓库。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>自使用maven以来，没少使用maven中央仓库中的各种jar包，方便有效，但是咱们也不能总是只取不予，也应该懂得奉献，当你写好了一个十分好用的jar包，想贡献出去给大家使用的时候，应该怎么做呢？当然是发布到maven的中央仓库了，不过要说这个发布过程，还真是比较复杂，本文就来详细说下如何发布jar包到maven中央仓库。</p>
+<!-- more -->
+<h1 id="一-简介">一、简介</h1>
+<h2 id="11-概述">1.1 概述</h2>
+<p>我们通常使用的<code>jar</code>包，大多都是从镜像上拉取的，也有私人仓库，也有直接从<code>Maven</code>中央仓库拉取的，无论从镜像还是仓库，发布到中央仓库的jar包，都是可以直接拉取下来的。所以，当我们自己打包了一个<code>jar</code>包之后，打算开源出去的时候，我们就可以将jar包发布到<a href="https://oss.sonatype.org/"><code>sonatype.org</code></a>，这个地址看起来不是<code>maven</code>，但是发布上去之后，我们在<a href="mvnrepository.com"><code>mvnrepository.com</code></a>和<a href="search.maven.org"><code>search.maven.org</code></a>都可以看到自己的<code>jar</code>包了。</p>
+<h2 id="12-本篇重点">1.2 本篇重点</h2>
+<p>本篇先介绍下如何用<code>git</code>的域名来发布自己的<code>jar</code>包，<a href="https://blog.csdn.net/feiyangtianyao/article/details/87878253">下一篇</a>介绍下如何用自己的域名来发布<code>jar</code>包。</p>
+<h2 id="13-地址">1.3 地址</h2>
+<p><strong>工单管理地址</strong>：<a href="https://issues.sonatype.org/secure/Dashboard.jspa">https://issues.sonatype.org/secure/Dashboard.jspa</a></p>
+<p>说明：注册账号、创建和管理<code>issue</code>，<code>jar</code>包的发布是以解决<code>issue</code>的方式起步的</p>
+<p><strong>jar包上传地址</strong>：<a href="https://oss.sonatype.org/#welcome">https://oss.sonatype.org/#welcome</a></p>
+<p>说明：使用<code>maven</code>提交后的<code>jar</code>包先到这个库中，可以用<code>maven</code>命令上传，也可以直接在界面上上传。</p>
+<h1 id="二-开始上传">二、开始上传</h1>
+<h2 id="21-创建工单">2.1 创建工单</h2>
+<p>创建工单是必须的，也很简单，在<a href="https://issues.sonatype.org/secure/Dashboard.jspa">工单管理</a>中提交下<code>jar</code>包相关信息即可。</p>
+<p>首先要注册账号，如果没有账号，需要先注册一个，记住用户名密码，后边要配置到<code>setting.xml</code>中。</p>
+<p>点击<code>Craete</code>，弹出如下窗口：<br>
+<img src="https://oiltea.github.io/post-images/1656339795206.png" alt="" loading="lazy"></p>
+<p>必填项选择：</p>
+<p><code>Project</code>：<code>Community Support - Open Source Project Repository Hosting</code></p>
+<p><code>Issue Type</code>：<code>New Project</code></p>
+<p><code>Summary</code>：JAR包名称，如：JpaMapper</p>
+<p><code>Group Id</code>：你懂得，不用多说，如<code>com.github.oiltea</code>，如果是个人域名，填写个人的<code>groupId</code>，如：<code>cn.amorou</code></p>
+<p><code>Project URL</code>：项目站点，如：<a href="https://github.com/oiltea/jpa-mapper">https://github.com/oiltea/jpa-mapper</a>，如果有项目主页，填写项目主页，如<a href="https://www.pomit.cn/jpa-mapper">https://www.pomit.cn/jpa-mapper</a></p>
+<p><code>SCM url</code>：项目源码仓库，如：<a href="https://github.com/oiltea/jpa-mapper.git">https://github.com/oiltea/jpa-mapper.git</a></p>
+<p>其他内容不用填写，默认即可。</p>
+<p>创建<code>Issue</code>后，<code>Sonatype</code>的工作人员审核处理，一般一个工作日以内，当<code>Issue</code>的<code>Status</code>变为<code>RESOLVED</code>后，就可以进行下一步操作了。</p>
+<p>使用<code>Group Id</code>为<code>com.github.oiltea</code>申请过程如下：<br>
+<img src="https://oiltea.github.io/post-images/1656339786871.png" alt="" loading="lazy"></p>
+<h2 id="22-配置maven">2.2 配置<code>Maven</code></h2>
+<h3 id="221-配置settingxml">2.2.1 配置<code>setting.xml</code></h3>
+<p><code>setting.xml</code>文件一般在当前用户文件夹的<code>.m2</code>文件夹下。</p>
+<p>在<code>servers</code>中增加<code>server</code>配置</p>
+<pre><code class="language-xml">&lt;servers&gt;
+    &lt;server&gt;
+        &lt;id&gt;sonatype-nexus-snapshots&lt;/id&gt;
+        &lt;username&gt;Sonatype 账号&lt;/username&gt;
+        &lt;password&gt;Sonatype 密码&lt;/password&gt;
+    &lt;/server&gt;
+    &lt;server&gt;
+        &lt;id&gt;sonatype-nexus-staging&lt;/id&gt;
+        &lt;username&gt;Sonatype 账号&lt;/username&gt;
+        &lt;password&gt;Sonatype 密码&lt;/password&gt;
+    &lt;/server&gt;
+&lt;/servers&gt;
+</code></pre>
+<h3 id="222-配置pomxml">2.2.2 配置pom.xml</h3>
+<h4 id="2221-搜到的方法">2.2.2.1 搜到的方法</h4>
+<p>网上的一般说要配置<code>oss-parent</code>，这样好处就是很多东西可以省掉。</p>
+<p>如：</p>
+<pre><code class="language-xml">&lt;parent&gt;
+    &lt;groupId&gt;org.sonatype.oss&lt;/groupId&gt;
+    &lt;artifactId&gt;oss-parent&lt;/artifactId&gt;
+    &lt;version&gt;7&lt;/version&gt;
+&lt;/parent&gt;
+</code></pre>
+<p>再加上开发者信息：</p>
+<pre><code class="language-xml">&lt;licenses&gt;
+	&lt;license&gt;
+		&lt;name&gt;The Apache Software License, Version 2.0&lt;/name&gt;
+		&lt;url&gt;http://www.apache.org/licenses/LICENSE-2.0.txt&lt;/url&gt;
+		&lt;distribution&gt;actable&lt;/distribution&gt;
+	&lt;/license&gt;
+&lt;/licenses&gt;
+
+&lt;developers&gt;
+	&lt;developer&gt;
+		&lt;name&gt;oiltea&lt;/name&gt;
+		&lt;email&gt;oiltea@qq.com&lt;/email&gt;
+		&lt;organization&gt;oiltea&lt;/organization&gt;
+		&lt;url&gt;https://github.com/oiltea&lt;/url&gt;
+	&lt;/developer&gt;
+&lt;/developers&gt;
+
+&lt;scm&gt;
+    &lt;tag&gt;master&lt;/tag&gt;
+    &lt;url&gt;git@github.com:oiltea/jpa-mapper.git&lt;/url&gt;
+    &lt;connection&gt;scm:git:git@github.com:oiltea/jpa-mapper.git&lt;/connection&gt;
+    &lt;developerConnection&gt;scm:git:git@github.com:oiltea/jpa-mapper.git&lt;/developerConnection&gt;
+&lt;/scm&gt;
+</code></pre>
+<h4 id="2222-我的方法">2.2.2.2 我的方法</h4>
+<p>但是如果我们已经配置了一个<code>parent</code>，可能就不想用这种方式了，可以使用以下方式：</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+	xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+	&lt;groupId&gt;cn.pomit&lt;/groupId&gt;
+	&lt;artifactId&gt;jpa-mapper&lt;/artifactId&gt;
+	&lt;version&gt;2.0&lt;/version&gt;
+	&lt;packaging&gt;pom&lt;/packaging&gt;
+
+	&lt;name&gt;jpa-mapper&lt;/name&gt;
+	&lt;description&gt;jpa code for mybatis&lt;/description&gt;
+	&lt;url&gt;https://www.pomit.cn/jpa-mapper&lt;/url&gt;
+	
+	&lt;properties&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;project.reporting.outputEncoding&gt;UTF-8&lt;/project.reporting.outputEncoding&gt;
+		&lt;java.version&gt;1.8&lt;/java.version&gt;
+		&lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+		&lt;spring-boot.version&gt;2.0.0.RELEASE&lt;/spring-boot.version&gt;
+	&lt;/properties&gt;
+	&lt;licenses&gt;
+		&lt;license&gt;
+			&lt;name&gt;The Apache Software License, Version 2.0&lt;/name&gt;
+			&lt;url&gt;http://www.apache.org/licenses/LICENSE-2.0.txt&lt;/url&gt;
+			&lt;distribution&gt;actable&lt;/distribution&gt;
+		&lt;/license&gt;
+	&lt;/licenses&gt;
+
+	&lt;developers&gt;
+		&lt;developer&gt;
+			&lt;name&gt;oiltea&lt;/name&gt;
+			&lt;email&gt;oiltea@qq.com&lt;/email&gt;
+			&lt;organization&gt;oiltea&lt;/organization&gt;
+			&lt;url&gt;https://github.com/oiltea&lt;/url&gt;
+		&lt;/developer&gt;
+	&lt;/developers&gt;
+
+	&lt;scm&gt;
+        &lt;tag&gt;master&lt;/tag&gt;
+        &lt;url&gt;git@github.com:oiltea/jpa-mapper.git&lt;/url&gt;
+        &lt;connection&gt;scm:git:git@github.com:oiltea/jpa-mapper.git&lt;/connection&gt;
+        &lt;developerConnection&gt;scm:git:git@github.com:oiltea/jpa-mapper.git&lt;/developerConnection&gt;
+    &lt;/scm&gt;
+    &lt;distributionManagement&gt;
+		&lt;snapshotRepository&gt;
+			&lt;id&gt;sonatype-nexus-snapshots&lt;/id&gt;
+			&lt;name&gt;Sonatype Nexus Snapshots&lt;/name&gt;
+			&lt;url&gt;https://oss.sonatype.org/content/repositories/snapshots&lt;/url&gt;
+		&lt;/snapshotRepository&gt;
+		&lt;repository&gt;
+			&lt;id&gt;sonatype-nexus-staging&lt;/id&gt;
+			&lt;name&gt;Nexus Release Repository&lt;/name&gt;
+			&lt;url&gt;https://oss.sonatype.org/service/local/staging/deploy/maven2/&lt;/url&gt;
+		&lt;/repository&gt;
+	&lt;/distributionManagement&gt;
+	
+	&lt;dependencyManagement&gt;
+		&lt;dependencies&gt;
+			&lt;dependency&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;
+				&lt;version&gt;${spring-boot.version}&lt;/version&gt;
+				&lt;type&gt;pom&lt;/type&gt;
+				&lt;scope&gt;import&lt;/scope&gt;
+			&lt;/dependency&gt;
+		&lt;/dependencies&gt;
+	&lt;/dependencyManagement&gt;
+
+	&lt;profiles&gt;
+		&lt;profile&gt;
+			&lt;id&gt;sonatype-oss-release&lt;/id&gt;
+			&lt;build&gt;
+				&lt;plugins&gt;
+					&lt;plugin&gt;
+						&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+						&lt;artifactId&gt;maven-source-plugin&lt;/artifactId&gt;
+						&lt;version&gt;2.1.2&lt;/version&gt;
+						&lt;executions&gt;
+							&lt;execution&gt;
+								&lt;id&gt;attach-sources&lt;/id&gt;
+								&lt;goals&gt;
+									&lt;goal&gt;jar-no-fork&lt;/goal&gt;
+								&lt;/goals&gt;
+							&lt;/execution&gt;
+						&lt;/executions&gt;
+					&lt;/plugin&gt;
+					&lt;plugin&gt;
+						&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+						&lt;artifactId&gt;maven-javadoc-plugin&lt;/artifactId&gt;
+						&lt;version&gt;2.9.1&lt;/version&gt;
+						&lt;executions&gt;
+							&lt;execution&gt;
+								&lt;id&gt;attach-javadocs&lt;/id&gt;
+								&lt;goals&gt;
+									&lt;goal&gt;jar&lt;/goal&gt;
+								&lt;/goals&gt;
+							&lt;/execution&gt;
+						&lt;/executions&gt;
+						&lt;configuration&gt;
+			                &lt;aggregate&gt;true&lt;/aggregate&gt;
+			                &lt;javadocExecutable&gt;${JAVA_HOME}/bin/javadoc&lt;/javadocExecutable&gt;
+			            &lt;/configuration&gt;
+					&lt;/plugin&gt;
+					&lt;plugin&gt;
+						&lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+						&lt;artifactId&gt;maven-gpg-plugin&lt;/artifactId&gt;
+						&lt;version&gt;1.1&lt;/version&gt;
+						&lt;executions&gt;
+							&lt;execution&gt;
+								&lt;id&gt;sign-artifacts&lt;/id&gt;
+								&lt;phase&gt;verify&lt;/phase&gt;
+								&lt;goals&gt;
+									&lt;goal&gt;sign&lt;/goal&gt;
+								&lt;/goals&gt;
+							&lt;/execution&gt;
+						&lt;/executions&gt;
+					&lt;/plugin&gt;
+				&lt;/plugins&gt;
+			&lt;/build&gt;
+		&lt;/profile&gt;
+	&lt;/profiles&gt;
+&lt;/project&gt;
+</code></pre>
+<h2 id="23-配置gpg-key">2.3 配置gpg-key</h2>
+<p>如果是使用的<code>windows</code>，可以下载<code>gpg4win</code>，地址：<code>https://www.gpg4win.org/download.html</code>，安装后在命令行中执行</p>
+<pre><code class="language-bash">gpg --gen-key
+</code></pre>
+<p>生成，过程中需要填写名字、邮箱等，其他步骤可以使用默认值，不过有个叫：Passphase的参数需要记住，这个相当于是是密钥的密码，下一步发布过程中进行签名操作的时候会用到。</p>
+<p>命令执行之后，会提示输入真实姓名和邮箱，之后提示输入密码。<br>
+<img src="https://oiltea.github.io/post-images/1656339770743.png" alt="" loading="lazy"></p>
+<p>之后会得到<code>pub</code>,上图中深色部分，将<code>pub</code>上传到<code>key</code>验证库</p>
+<pre><code class="language-bash">gpg --keyserver hkp://keyserver.ubuntu.com:11371 --send-keys EBD22379E4658EFC731753EC27039418A67D0C8F
+</code></pre>
+<h2 id="24-上传jar包">2.4 上传Jar包</h2>
+<p>使用<code>maven</code>命令上传<code>jar</code>包：</p>
+<pre><code class="language-bash">mvn clean deploy -P sonatype-oss-release -Darguments=&quot;gpg.passphrase=密钥密码&quot;
+</code></pre>
+<p>实际操作过程中，<code>-Darguments=&quot;gpg.passphrase=密钥密码&quot;</code>不写会提示输入密码，我这里写了还是提示了。</p>
+<p>使用<code>maven</code>命令部署会更好一点，因为我用<code>eclipse</code>没部署成功，提示出错，<code>eclipse</code>是这样玩的：<br>
+<img src="https://oiltea.github.io/post-images/1656339763861.png" alt="" loading="lazy"></p>
+<p>这个过程也是很让人崩溃的，特别慢，而且上传完成之后还是有很多问题。下面介绍一种<strong>快捷上传</strong>的方式。</p>
+<h3 id="25-快捷上传jar包">2.5 快捷上传jar包</h3>
+<p>使用<code>maven</code>命令上传多个<code>jar</code>包时，<code>sonatype</code>会自动把项目分割成多个<code>Repository</code>，这样<code>close</code>的时候就会校验失败，因为这个原因，上传了n次，不得不另辟蹊径。</p>
+<p>失败情况如图，不是<code>asc</code>文件没有，而是在第二个<code>Repository</code>中，<code>close</code>的时候就失败了：<br>
+<img src="https://oiltea.github.io/post-images/1656339758506.png" alt="" loading="lazy"></p>
+<p>因此，我们不能用这种方式，我们可以在页面上直接上传：</p>
+<p>先<code>drop</code>掉失败记录（个人强迫证），点击左侧的<code>staging-upload</code>，选择自己的<code>pom</code>文件和其他文件上传</p>
+<p><code>Select Artifact(s) for Upload</code>按钮点了选择文件之后，要点<code>Add Artifact</code>按钮将文件放置到<code>Artifacts</code>列表框中。<br>
+<code>Description</code>必填，但随意。</p>
+<p>如图：<br>
+<img src="https://oiltea.github.io/post-images/1656339736798.png" alt="" loading="lazy"></p>
+<h1 id="三-jar入库">三、Jar入库</h1>
+<p>经过漫长的等待，<code>jar</code>包可能应该已经上传到<a href="https://oss.sonatype.org/#stagingRepositories"><code>stagingRepositories</code></a>了。</p>
+<p>如图所示，我们可以在右上角的搜索框输入关键字查找我们的<code>jar</code>包。多个<code>jar</code>包的上传，会出现多个<code>Repository</code>，点击相应的<code>Repositories</code>，可以查看内容。</p>
+<p>图示：<br>
+<img src="https://oiltea.github.io/post-images/1656339725009.png" alt="" loading="lazy"></p>
+<h3 id="31-校验jar包">3.1 校验<code>jar</code>包</h3>
+<p>选择列表中的<code>Repositories</code>，多个<code>Repositories</code>要同时选定，此时的构件状态为<code>open</code>，点击上方的<code>close–&gt;Confirm</code>。<br>
+在下边的<code>Activity</code>选项卡中查看状态，当状态变成<code>closed</code>后，执行<code>Release–&gt;Confirm</code>，并在下边的<code>Activity</code>选项卡中查看状态。<br>
+成功后构件自动删除，一小段时间（约1-2个小时）后即可同步到maven的中央仓库。<br>
+下一篇介绍下如何用自己的域名来发布<code>jar</code>包。步骤类似，前面部分略有不同，需要配置其他东西。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[FastDFS 系列教程(四)：FastDFS 防盗链]]></title>
+        <id>https://oiltea.github.io/post/FastDFS 系列教程(四)：FastDFS 防盗链/</id>
+        <link href="https://oiltea.github.io/post/FastDFS 系列教程(四)：FastDFS 防盗链/">
+        </link>
+        <updated>2019-01-13T09:50:16.000Z</updated>
+        <summary type="html"><![CDATA[<p>防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p>防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。</p>
+<p>大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。</p>
+<p><code>FastDFS</code>通过<code>token</code>验证方式的防止盗链，其主要是通过验证密钥的准确性和密钥的有效时间来判断，这里，密钥一定要是私有的，非公开的。</p>
+<p>防盗链只是在基本的集成上添加了<code>token</code>的生成过程和路径的再构建过程。</p>
+<!-- more -->
+<h1 id="一-未开启防盗链">一、未开启防盗链</h1>
+<p>在前两篇章中我们学习了怎么使用<code>Nginx</code>访问<code>FastDFS</code>中的文件和使用<code>java</code>操作<code>FastDFS</code>，这里我们先上传一张图片，且直接访问确定能直接访问我们上传的图片。</p>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656413099146.png" alt="" loading="lazy"></figure>
+<h1 id="二-开启防盗链">二、开启防盗链</h1>
+<p>1.1 修改<code>/etc/fdfs/http.conf</code></p>
+<pre><code class="language-properties"># if use token to anti-steal
+# default value is false (0)
+# 是否开启防盗链
+http.anti_steal.check_token = true
+
+# token TTL (time to live), seconds
+# default value is 600
+# 防盗链 token 失效时间，默认 600 秒
+http.anti_steal.token_ttl = 900
+
+# secret key to generate anti-steal token
+# this parameter must be set when http.anti_steal.check_token set to true
+# the length of the secret key should not exceed 128 bytes
+# 生成防盗令牌的密钥
+http.anti_steal.secret_key = FastDFS1234567890
+
+# return the content of the file when check token fail
+# default value is empty (no file sepecified)
+# 检查令牌失败时返回文件的内容
+http.anti_steal.token_check_fail = /home/fastdfs/fastdfs-6.08/conf/anti-steal.jpg
+</code></pre>
+<pre><code>注意1：http.anti_steal.check_token  是否开启token验证，这个值一定要设置为 true
+注意2：http.anti_steal.secret_key   密钥，要注意是否跟项目内配置的一致
+注意3：http.anti_steal.token_check_fail  验证失败返回文件，启动 nginx它就会去确认这地址，这个值一定要配置对，切记
+注意4：配置完 http.config 后，记得重启 nginx
+</code></pre>
+<h2 id="12-再次访问">1.2 再次访问</h2>
+<p>开启防盗链后再次访问我们前面访问的图片文件，发现这时候访问不到了。<br>
+<img src="https://oiltea.github.io/post-images/1656413111204.png" alt="" loading="lazy"></p>
+<h2 id="13-获取有效的url">1.3 获取有效的<code>URL</code></h2>
+<p>因为加入了<code>token</code>验证，所以我们不能再通过浏览器直接访问了，我们接下来使用<code>java</code>程序获取有效访问的<code>URL</code></p>
+<pre><code class="language-java">/**
+  * @param fileId 文件id &quot;group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png&quot;
+  * @param secretKey 生成防窃取令牌的密钥 &quot;FastDFS1234567890&quot;
+  * @return String
+  */
+public static String getToken(String fileId, String secretKey) throws UnsupportedEncodingException, NoSuchAlgorithmException, MyException {
+    String url = fileId.substring(fileId.indexOf(&quot;/&quot;) + 1);
+
+    int lts = (int) (System.currentTimeMillis() / 1000);
+    String token = ProtoCommon.getToken(url, lts, secretKey);
+    token = fileId + &quot;?token=&quot; + token + &quot;&amp;ts=&quot; + lts;
+    return token;
+}
+</code></pre>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png?token=d56ca9c965214605f7b7443bd62183f9&amp;ts=1656412368
+</code></pre>
+<p>使用生成的带有<code>token</code>的<code>URL</code>访问：<br>
+<img src="https://oiltea.github.io/post-images/1656412963338.png" alt="" loading="lazy"></p>
+<p>如果我们将正确的<code>token</code>修改为错误的值会怎么样呢：</p>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png?token=d56ca9c965214605f7b7443bd62183f9&amp;ts=1656412368111
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://oiltea.github.io/post-images/1656412959779.png" alt="" loading="lazy"></figure>
+<p>这里看到会得到默认的错误配置图片<code>http.anti_steal.token_check_fail = /home/fastdfs/fastdfs-6.08/conf/anti-steal.jpg</code></p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[FastDFS 系列教程(三)：Java Client SDK]]></title>
+        <id>https://oiltea.github.io/post/FastDFS 系列教程(三)：Java Client SDK/</id>
+        <link href="https://oiltea.github.io/post/FastDFS 系列教程(三)：Java Client SDK/">
+        </link>
+        <updated>2019-01-12T10:00:52.000Z</updated>
+        <summary type="html"><![CDATA[<p>本章讲解<code>java</code>项目中怎么使用<code>FastDFS Java Client SDK</code>进行文件上传、下载、删除等操作。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>本章讲解<code>java</code>项目中怎么使用<code>FastDFS Java Client SDK</code>进行文件上传、下载、删除等操作。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p><code>FastDFS</code>用于构建文件和图片服务器是非常方便的，当前<code>FastDFS</code>的作者也提供了<code>java</code>调用的方式以及相关<code>Api</code>。</p>
+<p>要了解单服务器部署<code>FastDFS</code>的可以看我的上一篇文章，下面还会构建集群和集成<code>DHT</code>，废话不多说，进入本篇的正题——Java应用中如何集成FastDFS。</p>
+<h1 id="一-构建依赖">一、构建依赖</h1>
+<p><code>Java</code>集成<code>FastDFS</code>需要依赖<code>fastdfs-client-java</code>这个<code>jar</code>包，里面包含了<code>java</code>调用<code>FastDFS</code>的环境初始化逻辑，上传、下载、删除等对<code>FastDFS</code>文件的操作方式。</p>
+<p>因为作者并未将<code>jar</code>包放到大型的包服务器上进行管理，所以这里直接从仓库拉是不行的，这里采用本地构建依赖的方式引用<code>jar</code>包，当然也可以直接将<code>jar</code>包放到项目中进行引用。</p>
+<h2 id="11-克隆代码到本地目录">1.1 克隆代码到本地目录</h2>
+<p><code>git</code>项目地址：<a href="https://github.com/happyfish100/fastdfs-client-java">https://github.com/happyfish100/fastdfs-client-java</a></p>
+<h2 id="12-使用maven从源码安装">1.2 使用maven从源码安装</h2>
+<pre><code class="language-bash">mvn clean install
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1547285356273.png" alt="" loading="lazy"></figure>
+<p>此时在本地<code>maven</code>仓库就能看到相关<code>jar</code>包了。</p>
+<h1 id="二-项目使用">二、项目使用</h1>
+<h2 id="11-引入maven依赖">1.1 引入<code>maven</code>依赖</h2>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.csource&lt;/groupId&gt;
+    &lt;artifactId&gt;fastdfs-client-java&lt;/artifactId&gt;
+    &lt;version&gt;1.27-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h2 id="12-在srcmainresources下新增文件fastdfs-clientproperties">1.2 在<code>src/main/resources</code>下新增文件<code>fastdfs-client.properties</code></h2>
+<pre><code class="language-properties">fastdfs.connect_timeout_in_seconds = 5
+fastdfs.network_timeout_in_seconds = 30
+fastdfs.charset = UTF-8
+fastdfs.http_anti_steal_token = false
+fastdfs.http_secret_key = FastDFS1234567890
+fastdfs.http_tracker_http_port = 80
+
+fastdfs.tracker_servers = 192.168.184.128:22122
+
+fastdfs.connection_pool.enabled = true
+fastdfs.connection_pool.max_count_per_entry = 500
+fastdfs.connection_pool.max_idle_time = 3600
+fastdfs.connection_pool.max_wait_time_in_ms = 1000
+</code></pre>
+<pre><code>注1：fastdfs.tracker_servers 配置项不能重复属性名，多个 tracker_server 用逗号&quot;,&quot;隔开
+注2：除了fastdfs.tracker_servers，其它配置项都是可选的
+</code></pre>
+<h2 id="13-调用相关api">1.3 调用相关<code>API</code></h2>
+<pre><code class="language-java">import java.io.IOException;
+
+import org.csource.common.MyException;
+import org.csource.fastdfs.ClientGlobal;
+import org.csource.fastdfs.StorageClient1;
+import org.csource.fastdfs.StorageServer;
+import org.csource.fastdfs.StructGroupStat;
+import org.csource.fastdfs.StructStorageStat;
+import org.csource.fastdfs.TrackerClient;
+import org.csource.fastdfs.TrackerServer;
+
+public class FastdfsTests {
+
+	public static void main(String[] args) throws IOException, MyException {
+		// 加载 properties 格式文件配置：
+		ClientGlobal.initByProperties(&quot;fastdfs-client.properties&quot;);
+
+		// 创建 TrackerClient
+		TrackerClient trackerClient = new TrackerClient();
+		TrackerServer trackerServer = trackerClient.getTrackerServer();
+
+		// 查询所有分组信息
+		StructGroupStat[] structGroupStats = trackerClient.listGroups(trackerServer);
+
+		// 查询指定组的存储服务器统计信息
+		StructStorageStat[] structStorageStats1 = trackerClient.listStorages(trackerServer, &quot;group1&quot;);
+
+		// 查询指定组指定ip的存储服务器统计信息
+		StructStorageStat[] structStorageStats2 = trackerClient.listStorages(trackerServer, &quot;group1&quot;, &quot;192.168.184.128&quot;);
+
+		// 创建 StorageClient
+		StorageClient1 storageClient1 = new StorageClient1(trackerServer);
+		StorageServer storageServer = storageClient1.getStorageServer();
+
+		// 上传文件
+		String fileId = storageClient1.upload_file1(&quot;D:/test.png&quot;, &quot;png&quot;, null);
+		System.out.println(fileId);
+
+		// 下载文件
+		byte[] bs = storageClient1.download_file1(fileId);
+
+		// 删除文件
+		storageClient1.delete_file1(fileId);
+        
+        // 更多操作请自行查看 StorageClient1 方法
+        // ...
+	}
+}
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[FastDFS 系列教程(二)：开启Nginx访问支持]]></title>
+        <id>https://oiltea.github.io/post/FastDFS 系列教程(二)：开启Nginx访问支持/</id>
+        <link href="https://oiltea.github.io/post/FastDFS 系列教程(二)：开启Nginx访问支持/">
+        </link>
+        <updated>2019-01-11T03:41:02.000Z</updated>
+        <summary type="html"><![CDATA[<p>当我们使用<code>FastDFS</code>作为图片存储服务器时，我们可以便捷的配合<code>Nginx</code>实现对图片文件的快速访问。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>当我们使用<code>FastDFS</code>作为图片存储服务器时，我们可以便捷的配合<code>Nginx</code>实现对图片文件的快速访问。</p>
+<!-- more -->
+<h1 id="1-安装nginx">1、安装<code>Nginx</code></h1>
+<ul>
+<li>获取最新版下载地址<a href="https://repo.huaweicloud.com/nginx"><code>nginx</code></a>，并下载到<code>/home/nginx</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://repo.huaweicloud.com/nginx/nginx-1.23.0.tar.gz -O /home/nginx/nginx-1.23.0.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/nginx/nginx-1.23.0.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/nginx/nginx-1.23.0.tar.gz -C /home/nginx
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/nginx/nginx-1.23.0 &amp;&amp; ./configure --prefix=/home/nginx &amp;&amp; make &amp;&amp; make install
+# 编译安装完成后可以不用删除`/home/nginx/nginx-1.23.0`目录，以方便以后安装其他模块支持
+</code></pre>
+<ul>
+<li>添加环境变量</li>
+</ul>
+<p>修改<code>/etc/profile</code>文件，追加以下内容</p>
+<pre><code class="language-properties">done
+
+# 添加以下 begin
+export PATH=$PATH:/home/nginx/sbin
+# end
+
+unset i
+unset -f pathmunge
+</code></pre>
+<ul>
+<li>重新加载环境</li>
+</ul>
+<pre><code class="language-bash">source /etc/profile
+</code></pre>
+<ul>
+<li>把<code>nginx</code>设置为系统服务</li>
+</ul>
+<p>新建文件：<code>/usr/lib/systemd/system/nginx.service</code>，文件内容如下</p>
+<pre><code class="language-properties">[Unit]
+Description=nginx
+Documentation=http://nginx.org/en/docs/
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+
+ExecStartPre=/home/nginx/sbin/nginx -t -c /home/nginx/conf/nginx.conf
+ExecStart=/home/nginx/sbin/nginx -c /home/nginx/conf/nginx.conf
+ExecReload=/home/nginx/sbin/nginx -s reload
+ExecStop=/home/nginx/sbin/nginx -s stop
+ExecQuit=/home/nginx/sbin/nginx -s quit
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<ul>
+<li>重新加载系统服务</li>
+</ul>
+<pre><code class="language-bash">systemctl daemon-reload
+</code></pre>
+<ul>
+<li><code>nginx</code>服务常用操作命令</li>
+</ul>
+<pre><code class="language-bash"># 启动`nginx`服务
+systemctl start nginx
+
+# 停止`nginx`服务
+systemctl stop nginx
+
+# 重启`nginx`服务
+systemctl restart nginx
+
+# 重新加载`nginx`配置文件
+systemctl reload nginx
+
+# 开机自启`nginx`
+systemctl enable nginx
+</code></pre>
+<h1 id="2-安装fastdfs-nginx-module">2、安装<code>fastdfs-nginx-module</code></h1>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/fastdfs-nginx-module"><code>fastdfs-nginx-module</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/fastdfs-nginx-module/archive/refs/tags/V1.22.tar.gz -O /home/fastdfs/fastdfs-nginx-module-1.22.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/fastdfs-nginx-module-1.22.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/fastdfs-nginx-module-1.22.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>修改<code>/etc/fdfs/mod_fastdfs.conf</code>文件内容如下</li>
+</ul>
+<pre><code class="language-properties"># store_path#, based 0, if store_path0 not exists, it's value is base_path
+# the paths must be exist
+# must same as storage.conf
+# 此路径配置必须与`storage.conf`文件的`store_path0`保持一致
+store_path0=/home/fastdfs/storage
+
+# FastDFS tracker_server can ocur more than once, and tracker_server format is
+#  &quot;host:port&quot;, host can be hostname or ip address
+# valid only when load_fdfs_parameters_from_tracker is true
+tracker_server=192.168.184.128:22122
+
+# if the url / uri including the group name
+# set to false when uri like /M00/00/00/xxx
+# set to true when uri like ${group_name}/M00/00/00/xxx, such as group1/M00/xxx
+# default value is false
+url_have_group_name = true
+</code></pre>
+<ul>
+<li>为<code>nginx</code>添加<code>fastdfs-nginx-module</code>模块</li>
+</ul>
+<pre><code class="language-bash">cd /home/nginx/nginx-1.23.0 &amp;&amp; ./configure --prefix=/home/nginx --add-module=/home/fastdfs/fastdfs-nginx-module-1.22/src &amp;&amp; make &amp;&amp; make install
+</code></pre>
+<ul>
+<li>修改<code>nginx</code>配置文件<code>/home/nginx/conf/nginx.conf</code></li>
+</ul>
+<pre><code class="language-nginx">server {
+    listen       8888;    ## 该端口为storage.conf中的http.server_port相同
+    server_name  localhost;
+    location ~/group[0-9]/ {
+        ngx_fastdfs_module;
+    }
+}
+</code></pre>
+<ul>
+<li>重启<code>nginx</code>服务</li>
+</ul>
+<pre><code class="language-bash">systemctl restart nginx
+</code></pre>
+<h1 id="3-上传文件并使用nginx访问测试">3、上传文件并使用<code>nginx</code>访问测试</h1>
+<pre><code class="language-bash">fdfs_test /etc/fdfs/client.conf upload /home/test.png
+</code></pre>
+<p>使用浏览器打开之前上传时返回的连接</p>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656140648055.png" alt="" loading="lazy"></figure>
+<p>此时访问没有相应，查看<code>nginx</code>日志发现如下错误</p>
+<pre><code class="language-nginx">[2022-06-25 14:39:06] ERROR - file: ini_file_reader.c, line: 1051, include file &quot;http.conf&quot; not exists, line: &quot;#include http.conf&quot;
+[2022-06-25 14:39:06] ERROR - file: /home/fastdfs/fastdfs-nginx-module-1.22/src/common.c, line: 163, load conf file &quot;/etc/fdfs/mod_fastdfs.conf&quot; fail, ret code: 2
+</code></pre>
+<p>把<code>FastDFS</code>安装包下的<code>conf</code>文件夹下的<code>http.conf</code>和<code>mime.types</code>复制到<code>/etc/fdfs</code>下后，重启<code>nginx</code>服务后再次访问</p>
+<pre><code class="language-bash">cp /home/fastdfs/fastdfs-6.08/conf/http.conf /etc/fdfs/
+cp /home/fastdfs/fastdfs-6.08/conf/mime.types /etc/fdfs/
+systemctl restart nginx
+</code></pre>
+<p>成功访问到我们上传的图片文件了。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[FastDFS 系列教程(一)：服务搭建]]></title>
+        <id>https://oiltea.github.io/post/FastDFS 系列教程(一)：服务搭建/</id>
+        <link href="https://oiltea.github.io/post/FastDFS 系列教程(一)：服务搭建/">
+        </link>
+        <updated>2019-01-04T02:53:21.000Z</updated>
+        <summary type="html"><![CDATA[<p>FastDFS是为互联网应用量身定做的一套分布式文件存储系统，非常适合用来存储用户图片、视频、文档等文件。对于互联网应用，和其他分布式文件系统相比，优势非常明显。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>FastDFS是为互联网应用量身定做的一套分布式文件存储系统，非常适合用来存储用户图片、视频、文档等文件。对于互联网应用，和其他分布式文件系统相比，优势非常明显。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p>​<code>FastDFS</code>是阿里巴巴余庆老师用C语言开发的一个开源的高性能分布式文件系统。它的主要功能包括：文件存储，文件同步和文件访问（文件上传和文件下载），它可以解决高容量和负载均衡问题。FastDFS应该满足基于照片共享站点和视频共享站点之类的文件的网站的要求。</p>
+<p>​<code>FastDFS</code>具有两个角色：跟踪服务器 <code>tracker </code>和存储服务器<code>storage</code>。跟踪服务器<code>tracker</code>负责文件访问的调度和负载平衡。存储服务器<code>storage</code>的功能是文件管理，包括：文件存储，文件同步，提供文件访问界面。</p>
+<p>​跟踪服务器和存储服务器可以包含一台或多台服务器。跟踪服务器(或存储服务器)集群的服务器可以随时添加到集群中或从集群中删除，而不会影响在线服务，新增和删除的服务器会动态的添加/删除。</p>
+<p>​存储服务器按文件卷/组( group )进行组织以获得高容量。存储系统包含一个或多个卷，这些卷的文件相互独立。整个存储系统的容量等于所有卷容量的总和。一个文件卷包含一个或多个存储服务器，这些服务器之间的文件相同。文件卷中的服务器相互备份，并且所有这些服务器都在负载均衡中。将存储服务器添加到卷中时，该卷中已存在的文件会自动复制到该新服务器，复制完成后，系统会将此服务器添加到集群中，并对当前系统提供存储服务。</p>
+<p>​当整个存储容量不足时，你可以添加一个或多个卷以扩展存储容量。为此，你需要添加一个或多个存储服务器。</p>
+<p>​当上传大量的图片或者文件时，<code>FastDFS</code>可以配合<code>FastDHT</code>做去重处理，然后通过软连接指向唯一图片地址。</p>
+<p>​<code>FastDFS</code>返回的地址类似： 组名(group)/磁盘(M00)/目录(00)/文件名(xxxxxxxxxxxxxxxxxx.jpg)</p>
+<p>​GitHub地址：<a href="https://github.com/happyfish100/fastdfs">https://github.com/happyfish100/fastdfs</a></p>
+<!-- more -->
+<h1 id="一-环境配置">一、环境配置</h1>
+<h2 id="1程序版本">1.程序版本</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/happyfish100/fastdfs/archive/refs/tags/V6.08.tar.gz">fastdfs-6.08.tar.gz</a></td>
+<td>FastDFS服务器包</td>
+</tr>
+<tr>
+<td><a href="https://github.com/happyfish100/libfastcommon/archive/refs/tags/V1.0.58.tar.gz">libfastcommon-1.0.58.tar.gz</a></td>
+<td>FastDFS依赖的C公共库</td>
+</tr>
+<tr>
+<td><a href="https://github.com/happyfish100/fastdfs-nginx-module/archive/refs/tags/V1.22.tar.gz">fastdfs-nginx-module-1.22.tar.gz</a></td>
+<td>FastDFS的nginx依赖，解决延迟同步问题</td>
+</tr>
+<tr>
+<td><a href="https://repo.huaweicloud.com/nginx/nginx-1.23.0.tar.gz">nginx-1.23.0.tar.gz</a></td>
+<td>nginx服务器</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-磁盘目录">2、磁盘目录</h2>
+<table>
+<thead>
+<tr>
+<th>说明</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fastdfs</code>软件安装目录</td>
+<td>/home/fastdfs</td>
+</tr>
+<tr>
+<td><code>fastdfs tracker</code>数据存储目录</td>
+<td>/home/fastdfs/tracker</td>
+</tr>
+<tr>
+<td><code>fastdfs storage</code>数据存储目录</td>
+<td>/home/fastdfs/storage</td>
+</tr>
+<tr>
+<td><code>fastdfs client</code>客户端操作日志存储目录（测试使用，如无需测试可跳过）</td>
+<td>/home/fastdfs/client</td>
+</tr>
+<tr>
+<td><code>nginx</code>软件安装目录</td>
+<td>/home/nginx</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>创建<code>fastdfs</code>软件安装目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs
+</code></pre>
+<ul>
+<li>创建<code>fastdfs tracker</code>数据存储目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/tracker
+</code></pre>
+<ul>
+<li>创建<code>fastdfs storage</code>数据存储目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/storage
+</code></pre>
+<ul>
+<li>创建<code>fastdfs client</code>数据存储目录（测试使用，如无需测试可跳过）</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/client
+</code></pre>
+<ul>
+<li>创建<code>nginx</code>软件安装目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/nginx
+</code></pre>
+<h2 id="3-安装必要的工具库">3、安装必要的工具库</h2>
+<pre><code class="language-bash">yum install lrzsz -y
+yum install wget -y
+yum install vim -y
+yum instsll unzip -y
+yum install net-tools -y
+</code></pre>
+<h2 id="4-安装nginx以及fastdfs依赖库">4、安装<code>nginx</code>以及<code>fastdfs</code>依赖库</h2>
+<pre><code class="language-bash">yum install gcc -y
+yum install perl -y
+yum install pcre -y
+yum install pcre-devel -y
+yum install zlib -y
+yum install zlib-devel -y
+yum install openssl -y
+yum install openssl-devel -y
+yum install libevent -y
+yum install libevent-devel -y
+</code></pre>
+<h1 id="二-安装软件">二、安装软件</h1>
+<h2 id="1-安装libfastcommon">1、安装<code>libfastcommon</code></h2>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/libfastcommon"><code>libfastcommon</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/libfastcommon/archive/refs/tags/V1.0.58.tar.gz -O /home/fastdfs/libfastcommon-1.0.58.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/libfastcommon-1.0.58.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/libfastcommon-1.0.58.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/fastdfs/libfastcommon-1.0.58/ &amp;&amp; ./make.sh &amp;&amp; ./make.sh install
+</code></pre>
+<h2 id="2-安装fastdfs">2、安装<code>fastdfs</code></h2>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/fastdfs"><code>fastdfs</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/fastdfs/archive/refs/tags/V6.08.tar.gz -O /home/fastdfs/fastdfs-6.08.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/fastdfs-6.08.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/fastdfs-6.08.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/fastdfs/fastdfs-6.08/ &amp;&amp; ./make.sh &amp;&amp; ./make.sh install
+</code></pre>
+<h1 id="三-配置并启动">三、配置并启动</h1>
+<h2 id="1-配置并启动tracker">1、配置并启动<code>tracker</code></h2>
+<ul>
+<li>修改<code>/etc/fdfs/tracker.conf</code></li>
+</ul>
+<pre><code class="language-bash"># the tracker server port(tracker服务器默认端口)
+port = 22122
+
+# the base path to store data and log files
+# 配置tracker存储数据和日志的目录，修改为`/home/fastdfs/tracker`
+base_path = /home/fastdfs/tracker
+
+# HTTP port on this tracker server
+# tracker服务的http端口与nginx代理端口一致
+http.server_port = 8080
+
+# 其他配置不做解释
+...
+</code></pre>
+<ul>
+<li>启动<code>tracker</code></li>
+</ul>
+<pre><code class="language-bash">fdfs_trackerd /etc/fdfs/tracker.conf start
+# 启动后会在/home/fastdfs/ 目录下生成两个目录， 一个是数据目录`data`，一个是日志目录`logs`
+</code></pre>
+<ul>
+<li>设置开机启动</li>
+</ul>
+<pre><code class="language-bash">chkconfig fdfs_trackerd on
+</code></pre>
+<ul>
+<li>常用命令</li>
+</ul>
+<pre><code class="language-bash">#启动tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf start
+
+#重启动tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf restart
+
+#停止tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf stop
+</code></pre>
+<h2 id="2-配置并启动storage">2、配置并启动<code>storage</code></h2>
+<ul>
+<li>修改<code>/etc/fdfs/storage.conf</code></li>
+</ul>
+<pre><code class="language-bash"># the storage server port(storage服务器默认端口)
+port = 23000
+
+# the base path to store data and log files
+# NOTE: the binlog files maybe are large, make sure
+#       the base path has enough disk space,
+#       eg. the disk free space should &gt; 50GB
+# 存储数据和日志文件的路径，修改为`/home/fastdfs`
+# 配置storage存储数据和日志的目录，修改为`/home/fastdfs/storage`
+base_path = /home/fastdfs/storage
+
+# store path (disk or mount point) count, default value is 1
+# 路径(磁盘或挂载点)计数，默认值为1，值如果小于下面的存储目录则多余的存储目录不生效
+store_path_count = 1
+
+# store_path#, based on 0, to configure the store paths to store files
+# if store_path0 not exists, it's value is base_path (NOT recommended)
+# the paths must be exist.
+#
+# IMPORTANT NOTE:
+#       the store paths' order is very important, don't mess up!!!
+#       the base_path should be independent (different) of the store paths
+# 真正存放文件的目录
+store_path0 = /home/fastdfs/storage
+#store_path1 = /home/fastdfs1  # 第2个存储目录
+
+# tracker_server can ocur more than once for multi tracker servers.
+# the value format of tracker_server is &quot;HOST:PORT&quot;,
+#   the HOST can be hostname or ip address,
+#   and the HOST can be dual IPs or hostnames seperated by comma,
+#   the dual IPS must be an inner (intranet) IP and an outer (extranet) IP,
+#   or two different types of inner (intranet) IPs.
+#   for example: 192.168.2.100,122.244.141.46:22122
+#   another eg.: 192.168.1.10,172.17.4.21:22122
+# tracker服务器IP和端口
+tracker_server = 192.168.184.128:22122
+
+# the port of the web server on this storage server
+# http访问文件的端口(默认8888,看情况修改,和nginx中保持一致)
+http.server_port=8888
+
+# 其他配置不做解释
+...
+</code></pre>
+<ul>
+<li>启动<code>tracker</code></li>
+</ul>
+<pre><code class="language-bash">fdfs_storaged /etc/fdfs/storage.conf start
+</code></pre>
+<ul>
+<li>设置开机启动</li>
+</ul>
+<pre><code class="language-bash">chkconfig fdfs_storaged on
+</code></pre>
+<ul>
+<li>常用命令</li>
+</ul>
+<pre><code class="language-bash">#启动storage服务
+fdfs_storaged /etc/fdfs/storage.conf start
+
+#重启动storage服务
+fdfs_storaged /etc/fdfs/storage.conf restart
+
+#停止storage服务
+fdfs_storaged /etc/fdfs/storage.conf stop
+</code></pre>
+<h1 id="四-fastdfs测试">四、<code>FastDFS</code>测试</h1>
+<ul>
+<li>修改<code>/etc/fdfs/client.conf</code>配置文件</li>
+</ul>
+<pre><code class="language-bash"># the base path to store log files
+# 配置client操作日志存储目录，修改为`/home/fastdfs/client`
+base_path = /home/fastdfs/client
+
+# tracker_server can ocur more than once for multi tracker servers.
+# the value format of tracker_server is &quot;HOST:PORT&quot;,
+#   the HOST can be hostname or ip address,
+#   and the HOST can be dual IPs or hostnames seperated by comma,
+#   the dual IPS must be an inner (intranet) IP and an outer (extranet) IP,
+#   or two different types of inner (intranet) IPs.
+#   for example: 192.168.2.100,122.244.141.46:22122
+#   another eg.: 192.168.1.10,172.17.4.21:22122
+# tracker服务器IP和端口
+tracker_server = 192.168.184.128:22122
+</code></pre>
+<ul>
+<li>测试文件上传</li>
+</ul>
+<pre><code class="language-bash">fdfs_test /etc/fdfs/client.conf upload /home/test.txt
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656125804299.png" alt="" loading="lazy"></figure>
+<ul>
+<li>查看文件存储目录</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://oiltea.github.io/post-images/1656125660226.png" alt="" loading="lazy"></figure>
+<ul>
+<li>删除文件</li>
+</ul>
+<pre><code class="language-bash">fdfs_delete_file /etc/fdfs/client.conf group1/M00/00/00/wKi4gGK2a--ABPmhAAAAECaj2Iw261_big.txt
+</code></pre>
+]]></content>
+    </entry>
+</feed>

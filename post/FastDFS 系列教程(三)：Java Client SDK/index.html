@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>FastDFS 系列教程(三)：Java Client SDK | Oiltea</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://oiltea.github.io/favicon.ico?v=1656413518314">
+<link rel="stylesheet" href="https://oiltea.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="本章讲解java项目中怎么使用FastDFS Java Client SDK进行文件上传、下载、删除等操作。
+
+前言
+FastDFS用于构建文件和图片服务器是非常方便的，当前FastDFS的作者也提供了java调用的方式以及相关Api。
+要..." />
+    <meta name="keywords" content="Java,FastDFS" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://oiltea.github.io">
+        <img src="https://oiltea.github.io/images/avatar.png?v=1656413518314" class="site-logo">
+        <h1 class="site-title">Oiltea</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/oiltea" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      生活不知眼前的苟且，还有诗和远方的田野
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://oiltea.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">FastDFS 系列教程(三)：Java Client SDK</h2>
+            <div class="post-date">2019-01-12</div>
+            
+            <div class="post-content" v-pre>
+              <p>本章讲解<code>java</code>项目中怎么使用<code>FastDFS Java Client SDK</code>进行文件上传、下载、删除等操作。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p><code>FastDFS</code>用于构建文件和图片服务器是非常方便的，当前<code>FastDFS</code>的作者也提供了<code>java</code>调用的方式以及相关<code>Api</code>。</p>
+<p>要了解单服务器部署<code>FastDFS</code>的可以看我的上一篇文章，下面还会构建集群和集成<code>DHT</code>，废话不多说，进入本篇的正题——Java应用中如何集成FastDFS。</p>
+<h1 id="一-构建依赖">一、构建依赖</h1>
+<p><code>Java</code>集成<code>FastDFS</code>需要依赖<code>fastdfs-client-java</code>这个<code>jar</code>包，里面包含了<code>java</code>调用<code>FastDFS</code>的环境初始化逻辑，上传、下载、删除等对<code>FastDFS</code>文件的操作方式。</p>
+<p>因为作者并未将<code>jar</code>包放到大型的包服务器上进行管理，所以这里直接从仓库拉是不行的，这里采用本地构建依赖的方式引用<code>jar</code>包，当然也可以直接将<code>jar</code>包放到项目中进行引用。</p>
+<h2 id="11-克隆代码到本地目录">1.1 克隆代码到本地目录</h2>
+<p><code>git</code>项目地址：<a href="https://github.com/happyfish100/fastdfs-client-java">https://github.com/happyfish100/fastdfs-client-java</a></p>
+<h2 id="12-使用maven从源码安装">1.2 使用maven从源码安装</h2>
+<pre><code class="language-bash">mvn clean install
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1547285356273.png" alt="" loading="lazy"></figure>
+<p>此时在本地<code>maven</code>仓库就能看到相关<code>jar</code>包了。</p>
+<h1 id="二-项目使用">二、项目使用</h1>
+<h2 id="11-引入maven依赖">1.1 引入<code>maven</code>依赖</h2>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.csource&lt;/groupId&gt;
+    &lt;artifactId&gt;fastdfs-client-java&lt;/artifactId&gt;
+    &lt;version&gt;1.27-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h2 id="12-在srcmainresources下新增文件fastdfs-clientproperties">1.2 在<code>src/main/resources</code>下新增文件<code>fastdfs-client.properties</code></h2>
+<pre><code class="language-properties">fastdfs.connect_timeout_in_seconds = 5
+fastdfs.network_timeout_in_seconds = 30
+fastdfs.charset = UTF-8
+fastdfs.http_anti_steal_token = false
+fastdfs.http_secret_key = FastDFS1234567890
+fastdfs.http_tracker_http_port = 80
+
+fastdfs.tracker_servers = 192.168.184.128:22122
+
+fastdfs.connection_pool.enabled = true
+fastdfs.connection_pool.max_count_per_entry = 500
+fastdfs.connection_pool.max_idle_time = 3600
+fastdfs.connection_pool.max_wait_time_in_ms = 1000
+</code></pre>
+<pre><code>注1：fastdfs.tracker_servers 配置项不能重复属性名，多个 tracker_server 用逗号&quot;,&quot;隔开
+注2：除了fastdfs.tracker_servers，其它配置项都是可选的
+</code></pre>
+<h2 id="13-调用相关api">1.3 调用相关<code>API</code></h2>
+<pre><code class="language-java">import java.io.IOException;
+
+import org.csource.common.MyException;
+import org.csource.fastdfs.ClientGlobal;
+import org.csource.fastdfs.StorageClient1;
+import org.csource.fastdfs.StorageServer;
+import org.csource.fastdfs.StructGroupStat;
+import org.csource.fastdfs.StructStorageStat;
+import org.csource.fastdfs.TrackerClient;
+import org.csource.fastdfs.TrackerServer;
+
+public class FastdfsTests {
+
+	public static void main(String[] args) throws IOException, MyException {
+		// 加载 properties 格式文件配置：
+		ClientGlobal.initByProperties(&quot;fastdfs-client.properties&quot;);
+
+		// 创建 TrackerClient
+		TrackerClient trackerClient = new TrackerClient();
+		TrackerServer trackerServer = trackerClient.getTrackerServer();
+
+		// 查询所有分组信息
+		StructGroupStat[] structGroupStats = trackerClient.listGroups(trackerServer);
+
+		// 查询指定组的存储服务器统计信息
+		StructStorageStat[] structStorageStats1 = trackerClient.listStorages(trackerServer, &quot;group1&quot;);
+
+		// 查询指定组指定ip的存储服务器统计信息
+		StructStorageStat[] structStorageStats2 = trackerClient.listStorages(trackerServer, &quot;group1&quot;, &quot;192.168.184.128&quot;);
+
+		// 创建 StorageClient
+		StorageClient1 storageClient1 = new StorageClient1(trackerServer);
+		StorageServer storageServer = storageClient1.getStorageServer();
+
+		// 上传文件
+		String fileId = storageClient1.upload_file1(&quot;D:/test.png&quot;, &quot;png&quot;, null);
+		System.out.println(fileId);
+
+		// 下载文件
+		byte[] bs = storageClient1.download_file1(fileId);
+
+		// 删除文件
+		storageClient1.delete_file1(fileId);
+        
+        // 更多操作请自行查看 StorageClient1 方法
+        // ...
+	}
+}
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://oiltea.github.io/tag/jwFcDzusI/" class="tag">
+                    Java
+                  </a>
+                
+                  <a href="https://oiltea.github.io/tag/0_I3JywVU/" class="tag">
+                    FastDFS
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://oiltea.github.io/post/FastDFS 系列教程(二)：开启Nginx访问支持/">
+                  <h3 class="post-title">
+                    FastDFS 系列教程(二)：开启Nginx访问支持
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: '86831ec19fb38587e399',
+        clientSecret: '74161f83b290492230c1e91365a0872e8e1d3736',
+        repo: 'oiltea.github.io',
+        owner: 'oiltea',
+        admin: ['oiltea'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

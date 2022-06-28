@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>FastDFS 系列教程(四)：FastDFS 防盗链 | Oiltea</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://oiltea.github.io/favicon.ico?v=1656413518314">
+<link rel="stylesheet" href="https://oiltea.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。..." />
+    <meta name="keywords" content="Nginx,FastDFS" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://oiltea.github.io">
+        <img src="https://oiltea.github.io/images/avatar.png?v=1656413518314" class="site-logo">
+        <h1 class="site-title">Oiltea</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/oiltea" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      生活不知眼前的苟且，还有诗和远方的田野
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://oiltea.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">FastDFS 系列教程(四)：FastDFS 防盗链</h2>
+            <div class="post-date">2019-01-13</div>
+            
+            <div class="post-content" v-pre>
+              <p>防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p>防盗链主要是为了防止自己的图片、音乐、视频、软件等资源被其他网站或者非白名单之内的网站引用。</p>
+<p>大量的盗链很有可能造成自己的图片等设计得不到保障，其他盗链网站的请求疯狂涌向自己的文件服务器，在不知道的情况下，你的文件服务器成了别人的“后花园”。</p>
+<p><code>FastDFS</code>通过<code>token</code>验证方式的防止盗链，其主要是通过验证密钥的准确性和密钥的有效时间来判断，这里，密钥一定要是私有的，非公开的。</p>
+<p>防盗链只是在基本的集成上添加了<code>token</code>的生成过程和路径的再构建过程。</p>
+<!-- more -->
+<h1 id="一-未开启防盗链">一、未开启防盗链</h1>
+<p>在前两篇章中我们学习了怎么使用<code>Nginx</code>访问<code>FastDFS</code>中的文件和使用<code>java</code>操作<code>FastDFS</code>，这里我们先上传一张图片，且直接访问确定能直接访问我们上传的图片。</p>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656413099146.png" alt="" loading="lazy"></figure>
+<h1 id="二-开启防盗链">二、开启防盗链</h1>
+<p>1.1 修改<code>/etc/fdfs/http.conf</code></p>
+<pre><code class="language-properties"># if use token to anti-steal
+# default value is false (0)
+# 是否开启防盗链
+http.anti_steal.check_token = true
+
+# token TTL (time to live), seconds
+# default value is 600
+# 防盗链 token 失效时间，默认 600 秒
+http.anti_steal.token_ttl = 900
+
+# secret key to generate anti-steal token
+# this parameter must be set when http.anti_steal.check_token set to true
+# the length of the secret key should not exceed 128 bytes
+# 生成防盗令牌的密钥
+http.anti_steal.secret_key = FastDFS1234567890
+
+# return the content of the file when check token fail
+# default value is empty (no file sepecified)
+# 检查令牌失败时返回文件的内容
+http.anti_steal.token_check_fail = /home/fastdfs/fastdfs-6.08/conf/anti-steal.jpg
+</code></pre>
+<pre><code>注意1：http.anti_steal.check_token  是否开启token验证，这个值一定要设置为 true
+注意2：http.anti_steal.secret_key   密钥，要注意是否跟项目内配置的一致
+注意3：http.anti_steal.token_check_fail  验证失败返回文件，启动 nginx它就会去确认这地址，这个值一定要配置对，切记
+注意4：配置完 http.config 后，记得重启 nginx
+</code></pre>
+<h2 id="12-再次访问">1.2 再次访问</h2>
+<p>开启防盗链后再次访问我们前面访问的图片文件，发现这时候访问不到了。<br>
+<img src="https://oiltea.github.io/post-images/1656413111204.png" alt="" loading="lazy"></p>
+<h2 id="13-获取有效的url">1.3 获取有效的<code>URL</code></h2>
+<p>因为加入了<code>token</code>验证，所以我们不能再通过浏览器直接访问了，我们接下来使用<code>java</code>程序获取有效访问的<code>URL</code></p>
+<pre><code class="language-java">/**
+  * @param fileId 文件id &quot;group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png&quot;
+  * @param secretKey 生成防窃取令牌的密钥 &quot;FastDFS1234567890&quot;
+  * @return String
+  */
+public static String getToken(String fileId, String secretKey) throws UnsupportedEncodingException, NoSuchAlgorithmException, MyException {
+    String url = fileId.substring(fileId.indexOf(&quot;/&quot;) + 1);
+
+    int lts = (int) (System.currentTimeMillis() / 1000);
+    String token = ProtoCommon.getToken(url, lts, secretKey);
+    token = fileId + &quot;?token=&quot; + token + &quot;&amp;ts=&quot; + lts;
+    return token;
+}
+</code></pre>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png?token=d56ca9c965214605f7b7443bd62183f9&amp;ts=1656412368
+</code></pre>
+<p>使用生成的带有<code>token</code>的<code>URL</code>访问：<br>
+<img src="https://oiltea.github.io/post-images/1656412963338.png" alt="" loading="lazy"></p>
+<p>如果我们将正确的<code>token</code>修改为错误的值会怎么样呢：</p>
+<pre><code>group1/M00/00/00/wKi4gGK6z8CAKWUXAAAhWkdesf4544.png?token=d56ca9c965214605f7b7443bd62183f9&amp;ts=1656412368111
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://oiltea.github.io/post-images/1656412959779.png" alt="" loading="lazy"></figure>
+<p>这里看到会得到默认的错误配置图片<code>http.anti_steal.token_check_fail = /home/fastdfs/fastdfs-6.08/conf/anti-steal.jpg</code></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://oiltea.github.io/tag/L0ampZOu2/" class="tag">
+                    Nginx
+                  </a>
+                
+                  <a href="https://oiltea.github.io/tag/0_I3JywVU/" class="tag">
+                    FastDFS
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://oiltea.github.io/post/FastDFS 系列教程(三)：Java Client SDK/">
+                  <h3 class="post-title">
+                    FastDFS 系列教程(三)：Java Client SDK
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: '86831ec19fb38587e399',
+        clientSecret: '74161f83b290492230c1e91365a0872e8e1d3736',
+        repo: 'oiltea.github.io',
+        owner: 'oiltea',
+        admin: ['oiltea'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

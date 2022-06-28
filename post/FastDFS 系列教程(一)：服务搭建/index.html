@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>FastDFS 系列教程(一)：服务搭建 | Oiltea</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://oiltea.github.io/favicon.ico?v=1656413518314">
+<link rel="stylesheet" href="https://oiltea.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="FastDFS是为互联网应用量身定做的一套分布式文件存储系统，非常适合用来存储用户图片、视频、文档等文件。对于互联网应用，和其他分布式文件系统相比，优势非常明显。
+
+前言
+​FastDFS是阿里巴巴余庆老师用C语言开发的一个开源的高性能分布..." />
+    <meta name="keywords" content="CentOS,FastDFS" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://oiltea.github.io">
+        <img src="https://oiltea.github.io/images/avatar.png?v=1656413518314" class="site-logo">
+        <h1 class="site-title">Oiltea</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/oiltea" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      生活不知眼前的苟且，还有诗和远方的田野
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://oiltea.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">FastDFS 系列教程(一)：服务搭建</h2>
+            <div class="post-date">2019-01-04</div>
+            
+            <div class="post-content" v-pre>
+              <p>FastDFS是为互联网应用量身定做的一套分布式文件存储系统，非常适合用来存储用户图片、视频、文档等文件。对于互联网应用，和其他分布式文件系统相比，优势非常明显。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p>​<code>FastDFS</code>是阿里巴巴余庆老师用C语言开发的一个开源的高性能分布式文件系统。它的主要功能包括：文件存储，文件同步和文件访问（文件上传和文件下载），它可以解决高容量和负载均衡问题。FastDFS应该满足基于照片共享站点和视频共享站点之类的文件的网站的要求。</p>
+<p>​<code>FastDFS</code>具有两个角色：跟踪服务器 <code>tracker </code>和存储服务器<code>storage</code>。跟踪服务器<code>tracker</code>负责文件访问的调度和负载平衡。存储服务器<code>storage</code>的功能是文件管理，包括：文件存储，文件同步，提供文件访问界面。</p>
+<p>​跟踪服务器和存储服务器可以包含一台或多台服务器。跟踪服务器(或存储服务器)集群的服务器可以随时添加到集群中或从集群中删除，而不会影响在线服务，新增和删除的服务器会动态的添加/删除。</p>
+<p>​存储服务器按文件卷/组( group )进行组织以获得高容量。存储系统包含一个或多个卷，这些卷的文件相互独立。整个存储系统的容量等于所有卷容量的总和。一个文件卷包含一个或多个存储服务器，这些服务器之间的文件相同。文件卷中的服务器相互备份，并且所有这些服务器都在负载均衡中。将存储服务器添加到卷中时，该卷中已存在的文件会自动复制到该新服务器，复制完成后，系统会将此服务器添加到集群中，并对当前系统提供存储服务。</p>
+<p>​当整个存储容量不足时，你可以添加一个或多个卷以扩展存储容量。为此，你需要添加一个或多个存储服务器。</p>
+<p>​当上传大量的图片或者文件时，<code>FastDFS</code>可以配合<code>FastDHT</code>做去重处理，然后通过软连接指向唯一图片地址。</p>
+<p>​<code>FastDFS</code>返回的地址类似： 组名(group)/磁盘(M00)/目录(00)/文件名(xxxxxxxxxxxxxxxxxx.jpg)</p>
+<p>​GitHub地址：<a href="https://github.com/happyfish100/fastdfs">https://github.com/happyfish100/fastdfs</a></p>
+<!-- more -->
+<h1 id="一-环境配置">一、环境配置</h1>
+<h2 id="1程序版本">1.程序版本</h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/happyfish100/fastdfs/archive/refs/tags/V6.08.tar.gz">fastdfs-6.08.tar.gz</a></td>
+<td>FastDFS服务器包</td>
+</tr>
+<tr>
+<td><a href="https://github.com/happyfish100/libfastcommon/archive/refs/tags/V1.0.58.tar.gz">libfastcommon-1.0.58.tar.gz</a></td>
+<td>FastDFS依赖的C公共库</td>
+</tr>
+<tr>
+<td><a href="https://github.com/happyfish100/fastdfs-nginx-module/archive/refs/tags/V1.22.tar.gz">fastdfs-nginx-module-1.22.tar.gz</a></td>
+<td>FastDFS的nginx依赖，解决延迟同步问题</td>
+</tr>
+<tr>
+<td><a href="https://repo.huaweicloud.com/nginx/nginx-1.23.0.tar.gz">nginx-1.23.0.tar.gz</a></td>
+<td>nginx服务器</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-磁盘目录">2、磁盘目录</h2>
+<table>
+<thead>
+<tr>
+<th>说明</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fastdfs</code>软件安装目录</td>
+<td>/home/fastdfs</td>
+</tr>
+<tr>
+<td><code>fastdfs tracker</code>数据存储目录</td>
+<td>/home/fastdfs/tracker</td>
+</tr>
+<tr>
+<td><code>fastdfs storage</code>数据存储目录</td>
+<td>/home/fastdfs/storage</td>
+</tr>
+<tr>
+<td><code>fastdfs client</code>客户端操作日志存储目录（测试使用，如无需测试可跳过）</td>
+<td>/home/fastdfs/client</td>
+</tr>
+<tr>
+<td><code>nginx</code>软件安装目录</td>
+<td>/home/nginx</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>创建<code>fastdfs</code>软件安装目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs
+</code></pre>
+<ul>
+<li>创建<code>fastdfs tracker</code>数据存储目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/tracker
+</code></pre>
+<ul>
+<li>创建<code>fastdfs storage</code>数据存储目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/storage
+</code></pre>
+<ul>
+<li>创建<code>fastdfs client</code>数据存储目录（测试使用，如无需测试可跳过）</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/fastdfs/client
+</code></pre>
+<ul>
+<li>创建<code>nginx</code>软件安装目录</li>
+</ul>
+<pre><code class="language-bash">mkdir /home/nginx
+</code></pre>
+<h2 id="3-安装必要的工具库">3、安装必要的工具库</h2>
+<pre><code class="language-bash">yum install lrzsz -y
+yum install wget -y
+yum install vim -y
+yum instsll unzip -y
+yum install net-tools -y
+</code></pre>
+<h2 id="4-安装nginx以及fastdfs依赖库">4、安装<code>nginx</code>以及<code>fastdfs</code>依赖库</h2>
+<pre><code class="language-bash">yum install gcc -y
+yum install perl -y
+yum install pcre -y
+yum install pcre-devel -y
+yum install zlib -y
+yum install zlib-devel -y
+yum install openssl -y
+yum install openssl-devel -y
+yum install libevent -y
+yum install libevent-devel -y
+</code></pre>
+<h1 id="二-安装软件">二、安装软件</h1>
+<h2 id="1-安装libfastcommon">1、安装<code>libfastcommon</code></h2>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/libfastcommon"><code>libfastcommon</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/libfastcommon/archive/refs/tags/V1.0.58.tar.gz -O /home/fastdfs/libfastcommon-1.0.58.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/libfastcommon-1.0.58.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/libfastcommon-1.0.58.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/fastdfs/libfastcommon-1.0.58/ &amp;&amp; ./make.sh &amp;&amp; ./make.sh install
+</code></pre>
+<h2 id="2-安装fastdfs">2、安装<code>fastdfs</code></h2>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/fastdfs"><code>fastdfs</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/fastdfs/archive/refs/tags/V6.08.tar.gz -O /home/fastdfs/fastdfs-6.08.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/fastdfs-6.08.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/fastdfs-6.08.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/fastdfs/fastdfs-6.08/ &amp;&amp; ./make.sh &amp;&amp; ./make.sh install
+</code></pre>
+<h1 id="三-配置并启动">三、配置并启动</h1>
+<h2 id="1-配置并启动tracker">1、配置并启动<code>tracker</code></h2>
+<ul>
+<li>修改<code>/etc/fdfs/tracker.conf</code></li>
+</ul>
+<pre><code class="language-bash"># the tracker server port(tracker服务器默认端口)
+port = 22122
+
+# the base path to store data and log files
+# 配置tracker存储数据和日志的目录，修改为`/home/fastdfs/tracker`
+base_path = /home/fastdfs/tracker
+
+# HTTP port on this tracker server
+# tracker服务的http端口与nginx代理端口一致
+http.server_port = 8080
+
+# 其他配置不做解释
+...
+</code></pre>
+<ul>
+<li>启动<code>tracker</code></li>
+</ul>
+<pre><code class="language-bash">fdfs_trackerd /etc/fdfs/tracker.conf start
+# 启动后会在/home/fastdfs/ 目录下生成两个目录， 一个是数据目录`data`，一个是日志目录`logs`
+</code></pre>
+<ul>
+<li>设置开机启动</li>
+</ul>
+<pre><code class="language-bash">chkconfig fdfs_trackerd on
+</code></pre>
+<ul>
+<li>常用命令</li>
+</ul>
+<pre><code class="language-bash">#启动tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf start
+
+#重启动tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf restart
+
+#停止tracker服务
+fdfs_trackerd /etc/fdfs/tracker.conf stop
+</code></pre>
+<h2 id="2-配置并启动storage">2、配置并启动<code>storage</code></h2>
+<ul>
+<li>修改<code>/etc/fdfs/storage.conf</code></li>
+</ul>
+<pre><code class="language-bash"># the storage server port(storage服务器默认端口)
+port = 23000
+
+# the base path to store data and log files
+# NOTE: the binlog files maybe are large, make sure
+#       the base path has enough disk space,
+#       eg. the disk free space should &gt; 50GB
+# 存储数据和日志文件的路径，修改为`/home/fastdfs`
+# 配置storage存储数据和日志的目录，修改为`/home/fastdfs/storage`
+base_path = /home/fastdfs/storage
+
+# store path (disk or mount point) count, default value is 1
+# 路径(磁盘或挂载点)计数，默认值为1，值如果小于下面的存储目录则多余的存储目录不生效
+store_path_count = 1
+
+# store_path#, based on 0, to configure the store paths to store files
+# if store_path0 not exists, it's value is base_path (NOT recommended)
+# the paths must be exist.
+#
+# IMPORTANT NOTE:
+#       the store paths' order is very important, don't mess up!!!
+#       the base_path should be independent (different) of the store paths
+# 真正存放文件的目录
+store_path0 = /home/fastdfs/storage
+#store_path1 = /home/fastdfs1  # 第2个存储目录
+
+# tracker_server can ocur more than once for multi tracker servers.
+# the value format of tracker_server is &quot;HOST:PORT&quot;,
+#   the HOST can be hostname or ip address,
+#   and the HOST can be dual IPs or hostnames seperated by comma,
+#   the dual IPS must be an inner (intranet) IP and an outer (extranet) IP,
+#   or two different types of inner (intranet) IPs.
+#   for example: 192.168.2.100,122.244.141.46:22122
+#   another eg.: 192.168.1.10,172.17.4.21:22122
+# tracker服务器IP和端口
+tracker_server = 192.168.184.128:22122
+
+# the port of the web server on this storage server
+# http访问文件的端口(默认8888,看情况修改,和nginx中保持一致)
+http.server_port=8888
+
+# 其他配置不做解释
+...
+</code></pre>
+<ul>
+<li>启动<code>tracker</code></li>
+</ul>
+<pre><code class="language-bash">fdfs_storaged /etc/fdfs/storage.conf start
+</code></pre>
+<ul>
+<li>设置开机启动</li>
+</ul>
+<pre><code class="language-bash">chkconfig fdfs_storaged on
+</code></pre>
+<ul>
+<li>常用命令</li>
+</ul>
+<pre><code class="language-bash">#启动storage服务
+fdfs_storaged /etc/fdfs/storage.conf start
+
+#重启动storage服务
+fdfs_storaged /etc/fdfs/storage.conf restart
+
+#停止storage服务
+fdfs_storaged /etc/fdfs/storage.conf stop
+</code></pre>
+<h1 id="四-fastdfs测试">四、<code>FastDFS</code>测试</h1>
+<ul>
+<li>修改<code>/etc/fdfs/client.conf</code>配置文件</li>
+</ul>
+<pre><code class="language-bash"># the base path to store log files
+# 配置client操作日志存储目录，修改为`/home/fastdfs/client`
+base_path = /home/fastdfs/client
+
+# tracker_server can ocur more than once for multi tracker servers.
+# the value format of tracker_server is &quot;HOST:PORT&quot;,
+#   the HOST can be hostname or ip address,
+#   and the HOST can be dual IPs or hostnames seperated by comma,
+#   the dual IPS must be an inner (intranet) IP and an outer (extranet) IP,
+#   or two different types of inner (intranet) IPs.
+#   for example: 192.168.2.100,122.244.141.46:22122
+#   another eg.: 192.168.1.10,172.17.4.21:22122
+# tracker服务器IP和端口
+tracker_server = 192.168.184.128:22122
+</code></pre>
+<ul>
+<li>测试文件上传</li>
+</ul>
+<pre><code class="language-bash">fdfs_test /etc/fdfs/client.conf upload /home/test.txt
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656125804299.png" alt="" loading="lazy"></figure>
+<ul>
+<li>查看文件存储目录</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://oiltea.github.io/post-images/1656125660226.png" alt="" loading="lazy"></figure>
+<ul>
+<li>删除文件</li>
+</ul>
+<pre><code class="language-bash">fdfs_delete_file /etc/fdfs/client.conf group1/M00/00/00/wKi4gGK2a--ABPmhAAAAECaj2Iw261_big.txt
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://oiltea.github.io/tag/bs5EQa3UZ/" class="tag">
+                    CentOS
+                  </a>
+                
+                  <a href="https://oiltea.github.io/tag/0_I3JywVU/" class="tag">
+                    FastDFS
+                  </a>
+                
+              </div>
+            
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: '86831ec19fb38587e399',
+        clientSecret: '74161f83b290492230c1e91365a0872e8e1d3736',
+        repo: 'oiltea.github.io',
+        owner: 'oiltea',
+        admin: ['oiltea'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

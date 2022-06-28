@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>FastDFS 系列教程(二)：开启Nginx访问支持 | Oiltea</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://oiltea.github.io/favicon.ico?v=1656413518314">
+<link rel="stylesheet" href="https://oiltea.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="当我们使用FastDFS作为图片存储服务器时，我们可以便捷的配合Nginx实现对图片文件的快速访问。
+
+1、安装Nginx
+
+获取最新版下载地址nginx，并下载到/home/nginx目录
+
+wget https://repo.huawe..." />
+    <meta name="keywords" content="CentOS,Nginx,FastDFS" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://oiltea.github.io">
+        <img src="https://oiltea.github.io/images/avatar.png?v=1656413518314" class="site-logo">
+        <h1 class="site-title">Oiltea</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+          <a class="social-link" href="https://github.com/oiltea" target="_blank">
+            <i class="fab fa-github"></i>
+          </a>
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      生活不知眼前的苟且，还有诗和远方的田野
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://oiltea.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">FastDFS 系列教程(二)：开启Nginx访问支持</h2>
+            <div class="post-date">2019-01-11</div>
+            
+            <div class="post-content" v-pre>
+              <p>当我们使用<code>FastDFS</code>作为图片存储服务器时，我们可以便捷的配合<code>Nginx</code>实现对图片文件的快速访问。</p>
+<!-- more -->
+<h1 id="1-安装nginx">1、安装<code>Nginx</code></h1>
+<ul>
+<li>获取最新版下载地址<a href="https://repo.huaweicloud.com/nginx"><code>nginx</code></a>，并下载到<code>/home/nginx</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://repo.huaweicloud.com/nginx/nginx-1.23.0.tar.gz -O /home/nginx/nginx-1.23.0.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/nginx/nginx-1.23.0.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/nginx/nginx-1.23.0.tar.gz -C /home/nginx
+</code></pre>
+<ul>
+<li>编译&amp;安装</li>
+</ul>
+<pre><code class="language-bash">cd /home/nginx/nginx-1.23.0 &amp;&amp; ./configure --prefix=/home/nginx &amp;&amp; make &amp;&amp; make install
+# 编译安装完成后可以不用删除`/home/nginx/nginx-1.23.0`目录，以方便以后安装其他模块支持
+</code></pre>
+<ul>
+<li>添加环境变量</li>
+</ul>
+<p>修改<code>/etc/profile</code>文件，追加以下内容</p>
+<pre><code class="language-properties">done
+
+# 添加以下 begin
+export PATH=$PATH:/home/nginx/sbin
+# end
+
+unset i
+unset -f pathmunge
+</code></pre>
+<ul>
+<li>重新加载环境</li>
+</ul>
+<pre><code class="language-bash">source /etc/profile
+</code></pre>
+<ul>
+<li>把<code>nginx</code>设置为系统服务</li>
+</ul>
+<p>新建文件：<code>/usr/lib/systemd/system/nginx.service</code>，文件内容如下</p>
+<pre><code class="language-properties">[Unit]
+Description=nginx
+Documentation=http://nginx.org/en/docs/
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+
+ExecStartPre=/home/nginx/sbin/nginx -t -c /home/nginx/conf/nginx.conf
+ExecStart=/home/nginx/sbin/nginx -c /home/nginx/conf/nginx.conf
+ExecReload=/home/nginx/sbin/nginx -s reload
+ExecStop=/home/nginx/sbin/nginx -s stop
+ExecQuit=/home/nginx/sbin/nginx -s quit
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+<ul>
+<li>重新加载系统服务</li>
+</ul>
+<pre><code class="language-bash">systemctl daemon-reload
+</code></pre>
+<ul>
+<li><code>nginx</code>服务常用操作命令</li>
+</ul>
+<pre><code class="language-bash"># 启动`nginx`服务
+systemctl start nginx
+
+# 停止`nginx`服务
+systemctl stop nginx
+
+# 重启`nginx`服务
+systemctl restart nginx
+
+# 重新加载`nginx`配置文件
+systemctl reload nginx
+
+# 开机自启`nginx`
+systemctl enable nginx
+</code></pre>
+<h1 id="2-安装fastdfs-nginx-module">2、安装<code>fastdfs-nginx-module</code></h1>
+<ul>
+<li>获取最新版下载地址<a href="https://github.com/happyfish100/fastdfs-nginx-module"><code>fastdfs-nginx-module</code></a>，并下载到<code>/home/fastdfs</code>目录</li>
+</ul>
+<pre><code class="language-bash">wget https://github.com/happyfish100/fastdfs-nginx-module/archive/refs/tags/V1.22.tar.gz -O /home/fastdfs/fastdfs-nginx-module-1.22.tar.gz
+</code></pre>
+<ul>
+<li>解压缩<code>/home/fastdfs/fastdfs-nginx-module-1.22.tar.gz</code>到<code>/home/fastdfs</code></li>
+</ul>
+<pre><code class="language-bash">sudo tar -xzvf /home/fastdfs/fastdfs-nginx-module-1.22.tar.gz -C /home/fastdfs
+</code></pre>
+<ul>
+<li>修改<code>/etc/fdfs/mod_fastdfs.conf</code>文件内容如下</li>
+</ul>
+<pre><code class="language-properties"># store_path#, based 0, if store_path0 not exists, it's value is base_path
+# the paths must be exist
+# must same as storage.conf
+# 此路径配置必须与`storage.conf`文件的`store_path0`保持一致
+store_path0=/home/fastdfs/storage
+
+# FastDFS tracker_server can ocur more than once, and tracker_server format is
+#  &quot;host:port&quot;, host can be hostname or ip address
+# valid only when load_fdfs_parameters_from_tracker is true
+tracker_server=192.168.184.128:22122
+
+# if the url / uri including the group name
+# set to false when uri like /M00/00/00/xxx
+# set to true when uri like ${group_name}/M00/00/00/xxx, such as group1/M00/xxx
+# default value is false
+url_have_group_name = true
+</code></pre>
+<ul>
+<li>为<code>nginx</code>添加<code>fastdfs-nginx-module</code>模块</li>
+</ul>
+<pre><code class="language-bash">cd /home/nginx/nginx-1.23.0 &amp;&amp; ./configure --prefix=/home/nginx --add-module=/home/fastdfs/fastdfs-nginx-module-1.22/src &amp;&amp; make &amp;&amp; make install
+</code></pre>
+<ul>
+<li>修改<code>nginx</code>配置文件<code>/home/nginx/conf/nginx.conf</code></li>
+</ul>
+<pre><code class="language-nginx">server {
+    listen       8888;    ## 该端口为storage.conf中的http.server_port相同
+    server_name  localhost;
+    location ~/group[0-9]/ {
+        ngx_fastdfs_module;
+    }
+}
+</code></pre>
+<ul>
+<li>重启<code>nginx</code>服务</li>
+</ul>
+<pre><code class="language-bash">systemctl restart nginx
+</code></pre>
+<h1 id="3-上传文件并使用nginx访问测试">3、上传文件并使用<code>nginx</code>访问测试</h1>
+<pre><code class="language-bash">fdfs_test /etc/fdfs/client.conf upload /home/test.png
+</code></pre>
+<p>使用浏览器打开之前上传时返回的连接</p>
+<figure data-type="image" tabindex="1"><img src="https://oiltea.github.io/post-images/1656140648055.png" alt="" loading="lazy"></figure>
+<p>此时访问没有相应，查看<code>nginx</code>日志发现如下错误</p>
+<pre><code class="language-nginx">[2022-06-25 14:39:06] ERROR - file: ini_file_reader.c, line: 1051, include file &quot;http.conf&quot; not exists, line: &quot;#include http.conf&quot;
+[2022-06-25 14:39:06] ERROR - file: /home/fastdfs/fastdfs-nginx-module-1.22/src/common.c, line: 163, load conf file &quot;/etc/fdfs/mod_fastdfs.conf&quot; fail, ret code: 2
+</code></pre>
+<p>把<code>FastDFS</code>安装包下的<code>conf</code>文件夹下的<code>http.conf</code>和<code>mime.types</code>复制到<code>/etc/fdfs</code>下后，重启<code>nginx</code>服务后再次访问</p>
+<pre><code class="language-bash">cp /home/fastdfs/fastdfs-6.08/conf/http.conf /etc/fdfs/
+cp /home/fastdfs/fastdfs-6.08/conf/mime.types /etc/fdfs/
+systemctl restart nginx
+</code></pre>
+<p>成功访问到我们上传的图片文件了。</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://oiltea.github.io/tag/bs5EQa3UZ/" class="tag">
+                    CentOS
+                  </a>
+                
+                  <a href="https://oiltea.github.io/tag/L0ampZOu2/" class="tag">
+                    Nginx
+                  </a>
+                
+                  <a href="https://oiltea.github.io/tag/0_I3JywVU/" class="tag">
+                    FastDFS
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://oiltea.github.io/post/FastDFS 系列教程(一)：服务搭建/">
+                  <h3 class="post-title">
+                    FastDFS 系列教程(一)：服务搭建
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: '86831ec19fb38587e399',
+        clientSecret: '74161f83b290492230c1e91365a0872e8e1d3736',
+        repo: 'oiltea.github.io',
+        owner: 'oiltea',
+        admin: ['oiltea'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
