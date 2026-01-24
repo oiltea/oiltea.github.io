@@ -28,7 +28,6 @@ url: "https://oiltea.github.io"
 plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
-  - jekyll-feed
 
 github:
   username: oiltea # change to your GitHub username
